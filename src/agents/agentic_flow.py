@@ -1,25 +1,36 @@
 import sys
 
 sys.path.insert(0, "..")
-from termcolor import colored
+from colorama import init, Fore, Style
+from loguru import logger
 from src.prompts.prompt import agent_system_prompt_template
 from src.models.gemini_models import GeminiModel
 from src.tools.basic_calculator import basic_calculator
+from src.tools.date_parser import parse_datetime
 from src.toolbox.toolbox import ToolBox
+
+init()
+
+# Fore.RED
+# Fore.GREEN
+# Fore.YELLOW
+# Fore.BLUE
+# Fore.CYAN
+# Fore.MAGENTA
 
 
 class Agent:
-    def __init__(self, tools, model_service, model_name, stop=None):
+    def __init__(self, tools, model_service, model_name):
         """
         Initializes the agent with a list of tools and a model.
 
         Parameters:
-        tools (list): List of tool functions.
+        tools (list): List of custom functions as tools.
         model_service (class): The model service class with a generate_text method.
         model_name (str): The name of the model to use.
         """
         self.tools = tools
-        self.model_service = model_service
+        self.model_service = GeminiModel
         self.model_name = model_name
 
     def prepare_tools(self):
@@ -30,8 +41,8 @@ class Agent:
         str: Descriptions of the tools stored in the toolbox.
         """
         toolbox = ToolBox()
-        toolbox.store(self.tools)
-        tool_descriptions = toolbox.tools()
+        toolbox.register_functions(self.tools)
+        tool_descriptions = toolbox.get_registered_functions_as_string()
         return tool_descriptions
 
     def think(self, prompt):
@@ -49,26 +60,19 @@ class Agent:
             tool_descriptions=tool_descriptions
         )
 
-        print(colored(agent_system_prompt, "yellow"))
+        logger.info(
+            f"{Fore.CYAN}System prompt: {agent_system_prompt} {Style.RESET_ALL}"
+        )
 
-        # Create an instance of the model service with the system prompt
-
-        if self.model_service == GeminiModel:
-            model_instance = self.model_service(
-                model_name=self.model_name,
-                system_prompt=agent_system_prompt,
-                temperature=0,
-            )
-        else:
-            model_instance = self.model_service(
-                model=self.model_name, system_prompt=agent_system_prompt, temperature=0
-            )
+        model_instance = GeminiModel(
+            model_name=self.model_name, system_prompt=agent_system_prompt, temperature=0
+        )
 
         # Generate and return the response dictionary
         agent_response_dict = model_instance.generate_text(prompt)
         return agent_response_dict
 
-    def work(self, prompt):
+    def execute(self, prompt):
         """
         Parses the dictionary returned from think and executes the appropriate tool.
 
@@ -85,26 +89,19 @@ class Agent:
         for tool in self.tools:
             if tool.__name__ == tool_choice:
                 response = tool(tool_input)
-
-                print(colored(response, "cyan"))
+                print(f"{Fore.GREEN}Input argument: {tool_input}{Style.RESET_ALL}\n")
+                print(f"{Fore.GREEN}Response: {response}{Style.RESET_ALL}\n")
                 return
-                # return tool(tool_input)
-
-        print(colored(tool_input, "cyan"))
-
         return
 
 
 if __name__ == "__main__":
 
-    tools = [basic_calculator]
+    tools = [basic_calculator, parse_datetime]
 
     agent = Agent(
-        tools=tools,
-        model_service=GeminiModel,
-        model_name="gemini-2.0-flash-exp",
-        stop=None,
+        tools=tools, model_service=GeminiModel, model_name="gemini-2.0-flash-exp"
     )
-    prompt = "What is 5 plus 3?"
+    prompt = "convert '2025-01-01' to a datetime object"
 
-    agent.work(prompt)
+    agent.execute(prompt)
