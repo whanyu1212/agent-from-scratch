@@ -2,7 +2,7 @@ class ToolBox:
     def __init__(self):
         self.tools_dict = {}
 
-    def store(self, functions_list):
+    def register_functions(self, functions_list):
         """
         Stores the literal name and docstring of each function in the list.
 
@@ -16,9 +16,9 @@ class ToolBox:
             self.tools_dict[func.__name__] = func.__doc__
         return self.tools_dict
 
-    def tools(self):
+    def get_registered_functions_as_string(self):
         """
-        Returns the dictionary created in store as a text string.
+        Returns the dictionary created in register_functions as a text string.
 
         Returns:
         str: Dictionary of stored functions and their docstrings as a text string.
