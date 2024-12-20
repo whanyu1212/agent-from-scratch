@@ -19,6 +19,11 @@ init()
 # Fore.CYAN
 # Fore.MAGENTA
 
+DIRECT_RESPONSE_PROMPT = """
+You are a helpful AI assistant. Please provide a direct, clear response to the user's query.
+Respond in a natural, conversational way.
+"""
+
 
 class Agent:
     def __init__(self, tools: list, model_name: str):
@@ -69,6 +74,16 @@ class Agent:
         action_plan = model_instance.generate_text(prompt)
         return action_plan
 
+    def get_direct_response(self, prompt: str) -> str:
+        """Get direct response from LLM without using tools."""
+        model_instance = GeminiModel(
+            model_name=self.model_name,
+            system_prompt=DIRECT_RESPONSE_PROMPT,
+            temperature=0.7,
+        )
+        response = model_instance.generate_text(prompt)
+        return response.get("response", "")
+
     def execute_planned_action(self, prompt: str) -> Any:
         """
         Executes the planned action by routing to the appropriate tool.
@@ -90,6 +105,11 @@ class Agent:
                 print(f"{Fore.GREEN}Input argument: {tool_input}{Style.RESET_ALL}\n")
                 print(f"{Fore.GREEN}Response: {response}{Style.RESET_ALL}\n")
                 return response
+            else:
+                print(
+                    f"{Fore.GREEN}Direct LLM Response: {tool_input}{Style.RESET_ALL}\n"
+                )
+                return tool_input
         return None
 
 
@@ -98,6 +118,10 @@ if __name__ == "__main__":
     tools = [basic_calculator, parse_datetime]
 
     agent = Agent(tools=tools, model_name="gemini-2.0-flash-exp")
-    prompt = "convert '2025-01-01' to a datetime object"
+    for prompt in [
+        "What is the sum of 2 and 3?",
+        "convert '2022-12-31' to a datetime object",
+        "Explain the concept of time complexity.",
+    ]:
 
-    agent.execute_planned_action(prompt)
+        agent.execute_planned_action(prompt)
