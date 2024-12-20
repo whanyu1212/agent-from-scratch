@@ -48,7 +48,9 @@ class GeminiModel:
                 }
             ]
         }
-        logger.info(f"Payload sent to Gemini model: {payload}\n")
+        logger.info(
+            f"Payload sent to Gemini model:\n{json.dumps(payload, indent=2, sort_keys=True, separators=(',', ': '))}\n"
+        )
 
         response_dict = requests.post(
             self.model_endpoint, headers=self.headers, data=json.dumps(payload)
