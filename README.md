@@ -41,6 +41,24 @@ cp .env.example .env
 # Add your GEMINI_API_KEY to .env
 ```
 
+### High level flow diagram
+
+```mermaid
+graph TD
+    A[User Input/Prompt] --> B[Agent Class]
+    B --> C{Plan Action}
+    C -->|Tool Required| D[Format Tool Descriptions]
+    D --> E[Generate Action Plan via LLM]
+    E --> F[Execute Planned Action]
+    F --> G{Tool Choice?}
+    G -->|Matching Tool Found| H[Execute Tool with Input]
+    G -->|No Tool Match| I[Direct LLM Response]
+    C -->|No Tool Needed| J[Get Direct Response]
+    H --> K[Return Result]
+    I --> K
+    J --> K
+```
 
 ### Usage
 Please refer to [example notebook](notebook/example.ipynb) for a simple demonstration.
+
